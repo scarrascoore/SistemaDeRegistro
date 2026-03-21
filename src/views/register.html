@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crear cuenta | Sistema de Registro</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="auth-card">
+      <div class="auth-icon">👤+</div>
+
+      <h1 class="auth-title">Crea tu cuenta</h1>
+      <p class="auth-subtitle">Únete a nuestra comunidad hoy mismo.</p>
+
+      <button type="button" class="google-button">
+        <span class="google-icon">G</span>
+        Registrarse con Google
+      </button>
+
+      <div class="divider">
+        <span>O USA TU CORREO</span>
+      </div>
+
+      <form id="registerForm" class="auth-form" novalidate>
+        <input type="hidden" id="termsAccepted" name="termsAccepted" value="false" />
+        <input type="hidden" id="privacyAccepted" name="privacyAccepted" value="false" />
+
+        <div class="form-group">
+          <label for="fullName">NOMBRE COMPLETO</label>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            placeholder="Juan Pérez"
+            maxlength="120"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">CORREO ELECTRÓNICO</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="nombre@ejemplo.com"
+            maxlength="120"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">CONTRASEÑA</label>
+
+          <div class="password-field">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              minlength="8"
+              maxlength="64"
+              autocomplete="new-password"
+              required
+            />
+            <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
+              👁
+            </button>
+          </div>
+
+          <div class="password-strength">
+            <span class="strength-bar" id="strengthBar1"></span>
+            <span class="strength-bar" id="strengthBar2"></span>
+            <span class="strength-bar" id="strengthBar3"></span>
+          </div>
+
+          <p id="passwordStrengthText" class="strength-text">
+            La contraseña debe tener al menos 8 caracteres.
+          </p>
+        </div>
+
+        <div class="checkbox-row">
+          <input id="acceptanceCheckbox" type="checkbox" disabled />
+          <label for="acceptanceCheckbox">
+            Acepto los
+            <button type="button" class="inline-link" id="openTermsLink">Términos de Servicio</button>
+            y la
+            <button type="button" class="inline-link" id="openPrivacyLink">Política de Privacidad</button>.
+          </label>
+        </div>
+
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+
+        <button id="submitButton" type="submit" class="primary-button">
+          Crear cuenta →
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        ¿Ya tienes una cuenta?
+        <a href="/login">Inicia sesión</a>
+      </p>
+    </section>
+  </main>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden"></div>
+
+  <section id="termsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-header">
+      <h2>Términos de Servicio</h2>
+      <button type="button" class="close-button" data-close-modal="termsModal">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Bienvenido a nuestra plataforma. Al utilizar nuestros servicios, aceptas cumplir con los siguientes puntos:</p>
+      <ul>
+        <li>Uso responsable: Te comprometes a no realizar actividades ilícitas.</li>
+        <li>Propiedad: Todo el contenido es propiedad exclusiva de la empresa.</li>
+        <li>Cuentas: Eres responsable de mantener la confidencialidad de tu contraseña.</li>
+        <li>Modificaciones: Nos reservamos el derecho de actualizar estos términos en cualquier momento.</li>
+      </ul>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary-button" data-close-modal="termsModal">Cerrar</button>
+      <button type="button" class="primary-button small-button" id="acceptTermsButton">Acepto</button>
+    </div>
+  </section>
+
+  <section id="privacyModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-header">
+      <h2>Política de Privacidad</h2>
+      <button type="button" class="close-button" data-close-modal="privacyModal">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Tu privacidad es fundamental para nosotros. Aquí detallamos cómo protegemos tus datos:</p>
+      <ul>
+        <li>Recolección: Solo solicitamos datos necesarios para el servicio.</li>
+        <li>Seguridad: Implementamos protocolos para proteger tu información.</li>
+        <li>Terceros: No vendemos ni compartimos tus datos personales con empresas publicitarias.</li>
+        <li>Derechos: Puedes solicitar la eliminación de tu cuenta y datos en cualquier momento.</li>
+      </ul>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary-button" data-close-modal="privacyModal">Cerrar</button>
+      <button type="button" class="primary-button small-button" id="acceptPrivacyButton">Acepto</button>
+    </div>
+  </section>
+
+  <section id="otpModal" class="modal otp-modal hidden" aria-hidden="true">
+    <div class="otp-icon">🛡</div>
+
+    <h2 class="otp-title">Verifica tu correo</h2>
+    <p class="otp-subtitle">
+      Hemos enviado un código de 6 caracteres a
+      <strong id="otpEmailText">correo@ejemplo.com</strong>
+    </p>
+
+    <div class="otp-inputs" id="otpInputsContainer">
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+      <input type="text" class="otp-input" maxlength="1" inputmode="text" />
+    </div>
+
+    <p id="otpMessage" class="form-message" aria-live="polite"></p>
+
+    <button type="button" id="verifyOtpButton" class="primary-button">
+      Verificar código
+    </button>
+
+    <div class="otp-footer">
+      <p>¿No recibiste el código?</p>
+      <button type="button" id="resendOtpButton" class="inline-link otp-resend" disabled>
+        Reenviar código en <span id="otpCountdown">05:00</span>
+      </button>
+    </div>
+
+    <button type="button" class="back-link" data-close-modal="otpModal">
+      VOLVER AL REGISTRO
+    </button>
+  </section>
+
+  <script src="/js/register.js"></script>
+</body>
+</html>
