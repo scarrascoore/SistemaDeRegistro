@@ -1,7 +1,13 @@
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/userModel");
-const { createOtpPayload, compareOtp, isOtpExpired, MAX_OTP_ATTEMPTS, MAX_RESEND_COUNT } = require("../services/otpService");
+const {
+  createOtpPayload,
+  compareOtp,
+  isOtpExpired,
+  MAX_OTP_ATTEMPTS,
+  MAX_RESEND_COUNT
+} = require("../services/otpService");
 const { sendOtpEmail } = require("../services/emailService");
 
 const PASSWORD_SALT_ROUNDS = 12;
@@ -19,8 +25,10 @@ async function registerUser(req, res) {
     const fullName = req.body.fullName.trim();
     const email = req.body.email.trim().toLowerCase();
     const password = req.body.password;
-    const termsAccepted = req.body.termsAccepted === true || req.body.termsAccepted === "true";
-    const privacyAccepted = req.body.privacyAccepted === true || req.body.privacyAccepted === "true";
+    const termsAccepted =
+      req.body.termsAccepted === true || req.body.termsAccepted === "true";
+    const privacyAccepted =
+      req.body.privacyAccepted === true || req.body.privacyAccepted === "true";
 
     let user = await userModel.findUserByEmail(email);
 
@@ -128,7 +136,8 @@ async function verifyOtp(req, res) {
 
       return res.status(429).json({
         success: false,
-        message: "Superaste el número máximo de intentos. Solicita un nuevo código."
+        message:
+          "Superaste el número máximo de intentos. Solicita un nuevo código."
       });
     }
 
@@ -144,7 +153,8 @@ async function verifyOtp(req, res) {
 
         return res.status(429).json({
           success: false,
-          message: "Superaste el número máximo de intentos. Solicita un nuevo código."
+          message:
+            "Superaste el número máximo de intentos. Solicita un nuevo código."
         });
       }
 
