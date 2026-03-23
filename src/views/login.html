@@ -5,15 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | Sistema de Registro</title>
   <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
 </head>
 <body>
   <main class="page">
     <section class="auth-card">
       <div class="auth-icon">🔐</div>
+
       <h1 class="auth-title">Inicia sesión</h1>
-      <p class="auth-subtitle">Vista temporal. Luego conectaremos el login real.</p>
-      <a href="/register" class="primary-button link-button">Ir al registro</a>
+      <p class="auth-subtitle">Accede con tu correo y contraseña.</p>
+
+      <form id="loginForm" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="loginEmail">CORREO ELECTRÓNICO</label>
+          <input
+            id="loginEmail"
+            name="email"
+            type="email"
+            placeholder="nombre@ejemplo.com"
+            maxlength="120"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">CONTRASEÑA</label>
+
+          <div class="password-field">
+            <input
+              id="loginPassword"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              minlength="8"
+              maxlength="64"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" id="toggleLoginPassword" class="toggle-password" aria-label="Mostrar contraseña">
+              <i class="bi bi-eye-slash-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <p id="loginMessage" class="form-message" aria-live="polite"></p>
+
+        <button id="loginSubmitButton" type="submit" class="primary-button">
+          Ingresar →
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        ¿Aún no tienes cuenta?
+        <a href="/register">Crear cuenta</a>
+      </p>
     </section>
   </main>
+
+  <script src="/js/login.js"></script>
 </body>
 </html>

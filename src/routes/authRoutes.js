@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { body } = require("express-validator");
 const authController = require("../controllers/authController");
 const { handleValidationResults } = require("../middlewares/validationMiddleware");
+const { requireAuth } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -39,9 +40,21 @@ const resendLimiter = rateLimit({
   }
 });
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Demasiados intentos de login. Intenta nuevamente más tarde."
+  }
+});
+
 router.get("/", authController.renderRegisterView);
 router.get("/register", authController.renderRegisterView);
 router.get("/login", authController.renderLoginView);
+router.get("/dashboard", requireAuth, authController.renderDashboardView);
 
 router.post(
   "/api/auth/register",
@@ -99,5 +112,24 @@ router.post(
   handleValidationResults,
   authController.resendOtp
 );
+
+router.post(
+  "/api/auth/login",
+  loginLimiter,
+  [
+    body("email")
+      .trim()
+      .notEmpty().withMessage("El correo es obligatorio.")
+      .isEmail().withMessage("El correo electrónico no es válido.")
+      .normalizeEmail(),
+    body("password")
+      .isLength({ min: 8, max: 64 }).withMessage("La contraseña debe tener entre 8 y 64 caracteres.")
+  ],
+  handleValidationResults,
+  authController.loginUser
+);
+
+router.get("/api/auth/me", authController.getCurrentUser);
+router.post("/api/auth/logout", authController.logoutUser);
 
 module.exports = router;

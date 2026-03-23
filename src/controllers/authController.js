@@ -20,6 +20,10 @@ function renderLoginView(req, res) {
   return res.sendFile(path.join(__dirname, "..", "views", "login.html"));
 }
 
+function renderDashboardView(req, res) {
+  return res.sendFile(path.join(__dirname, "..", "views", "dashboard.html"));
+}
+
 async function registerUser(req, res) {
   try {
     const fullName = req.body.fullName.trim();
@@ -136,8 +140,7 @@ async function verifyOtp(req, res) {
 
       return res.status(429).json({
         success: false,
-        message:
-          "Superaste el número máximo de intentos. Solicita un nuevo código."
+        message: "Superaste el número máximo de intentos. Solicita un nuevo código."
       });
     }
 
@@ -153,8 +156,7 @@ async function verifyOtp(req, res) {
 
         return res.status(429).json({
           success: false,
-          message:
-            "Superaste el número máximo de intentos. Solicita un nuevo código."
+          message: "Superaste el número máximo de intentos. Solicita un nuevo código."
         });
       }
 
@@ -165,11 +167,11 @@ async function verifyOtp(req, res) {
     }
 
     await userModel.markOtpAsConsumed(activeOtp.id);
-    await userModel.markUserAsVerified(user.id);
+    const verifiedUser = await userModel.markUserAsVerified(user.id);
 
     req.session.user = {
-      id: user.id,
-      email: user.email
+      id: verifiedUser.id,
+      email: verifiedUser.email
     };
 
     return res.status(200).json({
@@ -248,10 +250,100 @@ async function resendOtp(req, res) {
   }
 }
 
+async function loginUser(req, res) {
+  try {
+    const email = req.body.email.trim().toLowerCase();
+    const password = req.body.password;
+
+    const user = await userModel.findUserByEmail(email);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Correo o contraseña incorrectos."
+      });
+    }
+
+    if (!user.is_verified) {
+      return res.status(403).json({
+        success: false,
+        message: "Debes verificar tu cuenta antes de iniciar sesión."
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.password_hash);
+
+    if (!passwordMatches) {
+      return res.status(401).json({
+        success: false,
+        message: "Correo o contraseña incorrectos."
+      });
+    }
+
+    req.session.user = {
+      id: user.id,
+      email: user.email
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Inicio de sesión correcto."
+    });
+  } catch (error) {
+    console.error("loginUser error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo iniciar sesión."
+    });
+  }
+}
+
+function getCurrentUser(req, res) {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: "No hay una sesión activa."
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    user: req.session.user
+  });
+}
+
+function logoutUser(req, res) {
+  if (!req.session) {
+    return res.status(200).json({
+      success: true,
+      message: "Sesión cerrada."
+    });
+  }
+
+  req.session.destroy((error) => {
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: "No se pudo cerrar sesión."
+      });
+    }
+
+    return res.clearCookie("connect.sid").status(200).json({
+      success: true,
+      message: "Sesión cerrada correctamente."
+    });
+  });
+}
+
 module.exports = {
   renderRegisterView,
   renderLoginView,
+  renderDashboardView,
   registerUser,
   verifyOtp,
-  resendOtp
+  resendOtp,
+  loginUser,
+  getCurrentUser,
+  logoutUser
 };
