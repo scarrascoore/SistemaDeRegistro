@@ -328,10 +328,23 @@ async function resendOtp() {
 
 passwordInput.addEventListener("input", updatePasswordStrength);
 
+const toggleLoginPasswordButton = document.getElementById("toggleLoginPassword");
+const loginPasswordInput = document.getElementById("loginPasswordInput");
+
+
 togglePasswordButton.addEventListener("click", () => {
   const isPasswordVisible = passwordInput.type === "text";
+
   passwordInput.type = isPasswordVisible ? "password" : "text";
-  togglePasswordButton.textContent = isPasswordVisible ? "👁" : "🙈";
+
+  togglePasswordButton.innerHTML = isPasswordVisible
+    ? '<i class="bi bi-eye-slash"></i>'
+    : '<i class="bi bi-eye"></i>';
+
+  togglePasswordButton.setAttribute(
+    "aria-label",
+    isPasswordVisible ? "Mostrar contraseña" : "Ocultar contraseña"
+  );
 });
 
 openTermsLink.addEventListener("click", () => openModal(termsModal));

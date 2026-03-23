@@ -403,6 +403,53 @@ body {
   color: var(--text-soft);
 }
 
+.otp-timer-text {
+  margin: 8px 0 10px;
+  font-size: 15px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.otp-timer-text strong {
+  color: var(--primary);
+  font-size: 16px;
+}
+
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  padding: 0;
+}
+
+.toggle-password:hover {
+  color: var(--primary);
+}
+
+.toggle-password-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+
 .otp-resend {
   margin-top: 6px;
   font-weight: 800;
