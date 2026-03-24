@@ -8,7 +8,7 @@ const {
   MAX_OTP_ATTEMPTS,
   MAX_RESEND_COUNT
 } = require("../services/otpService");
-const { sendOtpEmail } = require("../services/emailService");
+const { sendOtpEmail, sendPasswordResetEmail } = require("../services/emailService");
 
 const PASSWORD_SALT_ROUNDS = 12;
 
@@ -299,6 +299,8 @@ async function loginUser(req, res) {
   }
 }
 
+
+
 function getCurrentUser(req, res) {
   if (!req.session || !req.session.user) {
     return res.status(401).json({
@@ -336,6 +338,151 @@ function logoutUser(req, res) {
   });
 }
 
+function renderForgotPasswordView(req, res) {
+  return res.sendFile(path.join(__dirname, "..", "views", "forgot-password.html"));
+}
+
+async function forgotPassword(req, res) {
+  try {
+    const email = req.body.email.trim().toLowerCase();
+
+    const user = await userModel.findUserByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No existe una cuenta con ese correo."
+      });
+    }
+
+    const lastResetCode = await userModel.getLatestPasswordResetCodeByUserId(user.id);
+    const nextResendCount = lastResetCode ? Number(lastResetCode.resend_count) + 1 : 0;
+
+    if (nextResendCount > MAX_RESEND_COUNT) {
+      return res.status(429).json({
+        success: false,
+        message: "Superaste el número permitido de reenvíos. Intenta más tarde."
+      });
+    }
+
+    await userModel.invalidateActivePasswordResetCodes(user.id);
+
+    const { otpPlain, otpHash, expiresAt } = await createOtpPayload();
+
+    await userModel.createPasswordResetCode({
+      userId: user.id,
+      otpHash,
+      expiresAt,
+      resendCount: nextResendCount
+    });
+
+    await sendPasswordResetEmail({
+      to: email,
+      fullName: user.full_name,
+      otp: otpPlain
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Código de recuperación enviado correctamente.",
+      expiresInSeconds: 300
+    });
+  } catch (error) {
+    console.error("forgotPassword error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo iniciar la recuperación de contraseña."
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const email = req.body.email.trim().toLowerCase();
+    const otp = req.body.otp.trim().toUpperCase();
+    const newPassword = req.body.newPassword;
+
+    const user = await userModel.findUserByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No existe una cuenta con ese correo."
+      });
+    }
+
+    const activeResetCode = await userModel.getLatestActivePasswordResetCodeByUserId(user.id);
+
+    if (!activeResetCode) {
+      return res.status(400).json({
+        success: false,
+        message: "No existe un código de recuperación activo."
+      });
+    }
+
+    if (isOtpExpired(activeResetCode.expires_at)) {
+      await userModel.markPasswordResetCodeAsConsumed(activeResetCode.id);
+
+      return res.status(400).json({
+        success: false,
+        message: "El código de recuperación expiró. Solicita uno nuevo."
+      });
+    }
+
+    if (activeResetCode.attempts >= MAX_OTP_ATTEMPTS) {
+      await userModel.markPasswordResetCodeAsConsumed(activeResetCode.id);
+
+      return res.status(429).json({
+        success: false,
+        message: "Superaste el número máximo de intentos. Solicita un nuevo código."
+      });
+    }
+
+    const otpMatches = await compareOtp(otp, activeResetCode.otp_hash);
+
+    if (!otpMatches) {
+      const updatedResetCode = await userModel.incrementPasswordResetAttempts(activeResetCode.id);
+      const attemptsUsed = updatedResetCode ? updatedResetCode.attempts : activeResetCode.attempts + 1;
+      const attemptsLeft = Math.max(MAX_OTP_ATTEMPTS - attemptsUsed, 0);
+
+      if (attemptsUsed >= MAX_OTP_ATTEMPTS) {
+        await userModel.markPasswordResetCodeAsConsumed(activeResetCode.id);
+
+        return res.status(429).json({
+          success: false,
+          message: "Superaste el número máximo de intentos. Solicita un nuevo código."
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: `Código incorrecto. Intentos restantes: ${attemptsLeft}.`
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+
+    await userModel.updateUserPassword(user.id, passwordHash);
+    await userModel.markPasswordResetCodeAsConsumed(activeResetCode.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "La contraseña se actualizó correctamente."
+    });
+  } catch (error) {
+    console.error("resetPassword error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo restablecer la contraseña."
+    });
+  }
+}
+
+
+
+
 module.exports = {
   renderRegisterView,
   renderLoginView,
@@ -345,5 +492,9 @@ module.exports = {
   resendOtp,
   loginUser,
   getCurrentUser,
-  logoutUser
+  logoutUser,
+  forgotPassword,
+  resetPassword,
+  renderForgotPasswordView
+
 };

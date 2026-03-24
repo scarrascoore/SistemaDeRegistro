@@ -5,12 +5,15 @@ const sendRecoveryOtpButton = document.getElementById("sendRecoveryOtpButton");
 
 const resetSection = document.getElementById("resetSection");
 const recoveryOtpInput = document.getElementById("recoveryOtp");
+const recoveryCountdownText = document.getElementById("recoveryCountdownText");
+const otpVerifyMessage = document.getElementById("otpVerifyMessage");
+const verifyRecoveryOtpButton = document.getElementById("verifyRecoveryOtpButton");
+const resendRecoveryOtpButton = document.getElementById("resendRecoveryOtpButton");
+
 const newPasswordInput = document.getElementById("newPassword");
 const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
-const recoveryCountdownText = document.getElementById("recoveryCountdownText");
 const resetMessage = document.getElementById("resetMessage");
 const resetPasswordButton = document.getElementById("resetPasswordButton");
-const resendRecoveryOtpButton = document.getElementById("resendRecoveryOtpButton");
 
 const toggleNewPasswordButton = document.getElementById("toggleNewPassword");
 const toggleConfirmNewPasswordButton = document.getElementById("toggleConfirmNewPassword");
@@ -18,7 +21,8 @@ const toggleConfirmNewPasswordButton = document.getElementById("toggleConfirmNew
 const recoveryState = {
   email: "",
   seconds: 300,
-  timer: null
+  timer: null,
+  otpVerified: false
 };
 
 function setMessage(element, message, type) {
@@ -28,6 +32,11 @@ function setMessage(element, message, type) {
   if (type) {
     element.classList.add(type);
   }
+}
+
+function clearMessage(element) {
+  element.textContent = "";
+  element.classList.remove("success", "error");
 }
 
 function formatTime(totalSeconds) {
@@ -77,6 +86,22 @@ function togglePasswordVisibility(button, input) {
   );
 }
 
+function setResetControlsEnabled(enabled) {
+  newPasswordInput.disabled = !enabled;
+  confirmNewPasswordInput.disabled = !enabled;
+  toggleNewPasswordButton.disabled = !enabled;
+  toggleConfirmNewPasswordButton.disabled = !enabled;
+  resetPasswordButton.disabled = !enabled;
+}
+
+function resetVerificationState() {
+  recoveryState.otpVerified = false;
+  setResetControlsEnabled(false);
+  newPasswordInput.value = "";
+  confirmNewPasswordInput.value = "";
+  clearMessage(resetMessage);
+}
+
 async function sendRecoveryOtp(event) {
   event.preventDefault();
 
@@ -108,6 +133,9 @@ async function sendRecoveryOtp(event) {
 
     recoveryState.email = email;
     setMessage(recoveryMessage, result.message, "success");
+    clearMessage(otpVerifyMessage);
+    resetVerificationState();
+    recoveryOtpInput.value = "";
     resetSection.classList.remove("hidden");
     startRecoveryCountdown(result.expiresInSeconds || 300);
   } catch (error) {
@@ -118,13 +146,54 @@ async function sendRecoveryOtp(event) {
   }
 }
 
-async function resetPassword() {
+async function verifyRecoveryOtp() {
   const otp = recoveryOtpInput.value.trim().toUpperCase();
+
+  if (!otp || otp.length !== 6) {
+    setMessage(otpVerifyMessage, "Ingresa un OTP válido de 6 caracteres.", "error");
+    return;
+  }
+
+  verifyRecoveryOtpButton.disabled = true;
+  verifyRecoveryOtpButton.textContent = "Verificando...";
+
+  try {
+    const response = await fetch("/api/auth/verify-reset-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: recoveryState.email,
+        otp
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setMessage(otpVerifyMessage, result.message || "No se pudo verificar el código.", "error");
+      return;
+    }
+
+    recoveryState.otpVerified = true;
+    setMessage(otpVerifyMessage, result.message, "success");
+    setResetControlsEnabled(true);
+    newPasswordInput.focus();
+  } catch (error) {
+    setMessage(otpVerifyMessage, "Ocurrió un error inesperado.", "error");
+  } finally {
+    verifyRecoveryOtpButton.disabled = false;
+    verifyRecoveryOtpButton.textContent = "Verificar código";
+  }
+}
+
+async function resetPassword() {
   const newPassword = newPasswordInput.value;
   const confirmNewPassword = confirmNewPasswordInput.value;
 
-  if (!otp || otp.length !== 6) {
-    setMessage(resetMessage, "Ingresa un OTP válido de 6 caracteres.", "error");
+  if (!recoveryState.otpVerified) {
+    setMessage(resetMessage, "Primero debes verificar el código OTP.", "error");
     return;
   }
 
@@ -149,7 +218,6 @@ async function resetPassword() {
       },
       body: JSON.stringify({
         email: recoveryState.email,
-        otp,
         newPassword
       })
     });
@@ -193,18 +261,23 @@ async function resendRecoveryOtp() {
     const result = await response.json();
 
     if (!response.ok) {
-      setMessage(resetMessage, result.message || "No se pudo reenviar el código.", "error");
+      setMessage(otpVerifyMessage, result.message || "No se pudo reenviar el código.", "error");
       return;
     }
 
-    setMessage(resetMessage, result.message, "success");
+    recoveryState.otpVerified = false;
+    recoveryOtpInput.value = "";
+    clearMessage(otpVerifyMessage);
+    resetVerificationState();
+    setMessage(otpVerifyMessage, result.message, "success");
     startRecoveryCountdown(result.expiresInSeconds || 300);
   } catch (error) {
-    setMessage(resetMessage, "Ocurrió un error inesperado.", "error");
+    setMessage(otpVerifyMessage, "Ocurrió un error inesperado.", "error");
   }
 }
 
 forgotPasswordForm.addEventListener("submit", sendRecoveryOtp);
+verifyRecoveryOtpButton.addEventListener("click", verifyRecoveryOtp);
 resetPasswordButton.addEventListener("click", resetPassword);
 resendRecoveryOtpButton.addEventListener("click", resendRecoveryOtp);
 
@@ -217,5 +290,6 @@ toggleConfirmNewPasswordButton.addEventListener("click", () => {
 });
 
 updateRecoveryCountdown();
+setResetControlsEnabled(false);
 toggleNewPasswordButton.innerHTML = '<i class="bi bi-eye-slash"></i>';
 toggleConfirmNewPasswordButton.innerHTML = '<i class="bi bi-eye-slash"></i>';
