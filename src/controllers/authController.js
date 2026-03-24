@@ -400,8 +400,51 @@ async function forgotPassword(req, res) {
 async function resetPassword(req, res) {
   try {
     const email = req.body.email.trim().toLowerCase();
-    const otp = req.body.otp.trim().toUpperCase();
     const newPassword = req.body.newPassword;
+
+    const verifiedReset = req.session.passwordResetVerified;
+
+    if (!verifiedReset || verifiedReset.email !== email) {
+      return res.status(403).json({
+        success: false,
+        message: "Primero debes verificar el código OTP de recuperación."
+      });
+    }
+
+    const user = await userModel.findUserByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No existe una cuenta con ese correo."
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+
+    await userModel.updateUserPassword(user.id, passwordHash);
+    await userModel.invalidateActivePasswordResetCodes(user.id);
+
+    delete req.session.passwordResetVerified;
+
+    return res.status(200).json({
+      success: true,
+      message: "La contraseña se actualizó correctamente."
+    });
+  } catch (error) {
+    console.error("resetPassword error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo restablecer la contraseña."
+    });
+  }
+}
+
+async function verifyResetOtp(req, res) {
+  try {
+    const email = req.body.email.trim().toLowerCase();
+    const otp = req.body.otp.trim().toUpperCase();
 
     const user = await userModel.findUserByEmail(email);
 
@@ -461,26 +504,25 @@ async function resetPassword(req, res) {
       });
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
-
-    await userModel.updateUserPassword(user.id, passwordHash);
-    await userModel.markPasswordResetCodeAsConsumed(activeResetCode.id);
+    req.session.passwordResetVerified = {
+      userId: user.id,
+      email: user.email,
+      verifiedAt: Date.now()
+    };
 
     return res.status(200).json({
       success: true,
-      message: "La contraseña se actualizó correctamente."
+      message: "Código OTP verificado correctamente. Ya puedes cambiar tu contraseña."
     });
   } catch (error) {
-    console.error("resetPassword error:", error.message);
+    console.error("verifyResetOtp error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: "No se pudo restablecer la contraseña."
+      message: "No se pudo verificar el código de recuperación."
     });
   }
 }
-
-
 
 
 module.exports = {
@@ -495,6 +537,7 @@ module.exports = {
   logoutUser,
   forgotPassword,
   resetPassword,
+  verifyResetOtp,
   renderForgotPasswordView
 
 };
