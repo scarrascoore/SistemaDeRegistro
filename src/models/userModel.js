@@ -200,6 +200,123 @@ async function markOtpAsConsumed(otpId) {
   return rows[0] || null;
 }
 
+
+async function invalidateActivePasswordResetCodes(userId) {
+  const query = `
+    UPDATE password_reset_codes
+    SET consumed_at = NOW()
+    WHERE user_id = $1
+      AND consumed_at IS NULL
+  `;
+
+  await pool.query(query, [userId]);
+}
+
+async function createPasswordResetCode({
+  userId,
+  otpHash,
+  expiresAt,
+  resendCount
+}) {
+  const query = `
+    INSERT INTO password_reset_codes (
+      user_id,
+      otp_hash,
+      expires_at,
+      resend_count
+    )
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, user_id, expires_at, resend_count, attempts, created_at
+  `;
+
+  const values = [userId, otpHash, expiresAt, resendCount];
+  const { rows } = await pool.query(query, values);
+
+  return rows[0];
+}
+
+async function getLatestActivePasswordResetCodeByUserId(userId) {
+  const query = `
+    SELECT
+      id,
+      user_id,
+      otp_hash,
+      expires_at,
+      consumed_at,
+      resend_count,
+      attempts,
+      created_at
+    FROM password_reset_codes
+    WHERE user_id = $1
+      AND consumed_at IS NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  const { rows } = await pool.query(query, [userId]);
+  return rows[0] || null;
+}
+
+async function getLatestPasswordResetCodeByUserId(userId) {
+  const query = `
+    SELECT
+      id,
+      user_id,
+      otp_hash,
+      expires_at,
+      consumed_at,
+      resend_count,
+      attempts,
+      created_at
+    FROM password_reset_codes
+    WHERE user_id = $1
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  const { rows } = await pool.query(query, [userId]);
+  return rows[0] || null;
+}
+
+async function incrementPasswordResetAttempts(resetCodeId) {
+  const query = `
+    UPDATE password_reset_codes
+    SET attempts = attempts + 1
+    WHERE id = $1
+    RETURNING id, attempts
+  `;
+
+  const { rows } = await pool.query(query, [resetCodeId]);
+  return rows[0] || null;
+}
+
+async function markPasswordResetCodeAsConsumed(resetCodeId) {
+  const query = `
+    UPDATE password_reset_codes
+    SET consumed_at = NOW()
+    WHERE id = $1
+    RETURNING id
+  `;
+
+  const { rows } = await pool.query(query, [resetCodeId]);
+  return rows[0] || null;
+}
+
+async function updateUserPassword(userId, passwordHash) {
+  const query = `
+    UPDATE users
+    SET
+      password_hash = $1,
+      updated_at = NOW()
+    WHERE id = $2
+    RETURNING id, email
+  `;
+
+  const { rows } = await pool.query(query, [passwordHash, userId]);
+  return rows[0] || null;
+}
+
+
 module.exports = {
   findUserByEmail,
   createUser,
@@ -210,5 +327,12 @@ module.exports = {
   getLatestActiveOtpByUserId,
   getLatestOtpByUserId,
   incrementOtpAttempts,
-  markOtpAsConsumed
+  markOtpAsConsumed,
+  invalidateActivePasswordResetCodes,
+  createPasswordResetCode,
+  getLatestActivePasswordResetCodeByUserId,
+  getLatestPasswordResetCodeByUserId,
+  incrementPasswordResetAttempts,
+  markPasswordResetCodeAsConsumed,
+  updateUserPassword
 };
