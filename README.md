@@ -160,10 +160,13 @@ http://localhost:3000/register
 <img align="center" alt="coding" width="980" src="imagenes/Diagrama.png">
 
 
+<img align="center" alt="coding" width="1280" src="imagenes/Diagrama_bizagui.png">
+
 ---
 
 ## Autor
-
 **SHELVY CARRASCO ORÉ**
 - GitHub: [@scarrascoore](https://github.com/scarrascoore)
 - LinkedIn: [Shelvycarrascoore](https://linkedin.com/in/shelvycarrascoore)
+
+
