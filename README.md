@@ -160,6 +160,12 @@ http://localhost:3000/register
 **1. Pantalla Registro de Usuarios**
 <br>
 <img align="center" alt="coding" width="580" src="imagenes/image_01.png">
+<br>
+
+<img align="center" alt="coding" width="580" src="imagenes/image_04.png">
+<br>
+
+<br>
 
 **2. Pantalla Loguin**
 <br>
