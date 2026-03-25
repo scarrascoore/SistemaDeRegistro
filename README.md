@@ -101,6 +101,21 @@ SistemaDeRegistro/
 
 ---
 
+## Base de datos con Docker
+
+La base de datos PostgreSQL se ejecuta en un contenedor Docker dentro de la carpeta `DB_SistemaDeRegistro`.
+
+### Estructura
+
+```text
+DB_SistemaDeRegistro/
+├── .env
+├── docker-compose.yml
+└── init/
+    └── 01_init.sql
+```
+
+---
 ## Configuracion de DB
 
 1. Ingresar a la carpeta de DB
