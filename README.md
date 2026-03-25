@@ -155,3 +155,15 @@ npm run dev
 http://localhost:3000/register
 ```
 
+## Flujo funcional del sistema
+
+<img align="center" alt="coding" width="980" src="imagenes/Diagrama.png">
+
+
+---
+
+## Autor
+
+**SHELVY CARRASCO ORÉ**
+- GitHub: [@scarrascoore](https://github.com/scarrascoore)
+- LinkedIn: [Shelvycarrascoore](https://linkedin.com/in/shelvycarrascoore)
