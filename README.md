@@ -155,12 +155,23 @@ npm run dev
 http://localhost:3000/register
 ```
 
+## PRUEBAS
+
+**1. Pantalla Registro de Usuarios**
+<br>
+<img align="center" alt="coding" width="580" src="imagenes/image_01.png">
+
+**2. Pantalla Loguin**
+<br>
+<img align="center" alt="coding" width="480" src="imagenes/image_02.png">
+
+
 ## Flujo funcional del sistema
 
 <img align="center" alt="coding" width="980" src="imagenes/Diagrama.png">
 
 
-<img align="center" alt="coding" width="1280" src="imagenes/Diagrama_bizagui.png">
+<img align="center" alt="coding" width="1280" src="imagenes/image_03.png.png">
 
 ---
 
