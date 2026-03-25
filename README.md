@@ -165,6 +165,9 @@ http://localhost:3000/register
 <br>
 <img align="center" alt="coding" width="480" src="imagenes/image_02.png">
 
+**3. Pantalla Recuperar Contraseña**
+<br>
+<img align="center" alt="coding" width="1080" src="imagenes/image_03.png">
 
 ## Flujo funcional del sistema
 
