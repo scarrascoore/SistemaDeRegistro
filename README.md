@@ -176,11 +176,12 @@ http://localhost:3000/register
 <img align="center" alt="coding" width="1080" src="imagenes/image_03.png">
 
 ## Flujo funcional del sistema
+**DIAGRAMA DE FLUJO**
+    <img align="center" alt="coding" width="980" src="imagenes/Diagrama.png">
+<br>
 
-<img align="center" alt="coding" width="980" src="imagenes/Diagrama.png">
-
-
-<img align="center" alt="coding" width="1280" src="imagenes/image_03.png.png">
+**DIAGRAMA BIZAGUI**
+    <img align="center" alt="coding" width="1280" src="imagenes/Diagrama_bizagui.png">
 
 ---
 
